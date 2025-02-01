@@ -21,6 +21,8 @@ class UpdateWalletApiView(viewsets.ViewSet):
     def update(self, request, pk=None):
         operationType = request.data.get('operationType')
         amount = request.data.get('amount')
+        if amount < 0:
+            return Response({"error": "Сумма должна быть положительной."}, status=400) # TODO Написать тест для сценария
         wallet = self.get_wallet(pk)
         try:
             amount = Decimal(amount)
