@@ -3,9 +3,11 @@ from rest_framework.routers import DefaultRouter
 
 from .views import WalletApiView, UpdateWalletApiView
 
+app_name = 'wallets'
+
 router = DefaultRouter()
 
-router.register(r'v1/wallets', WalletApiView, basename='wallets-list')
+router.register(r'v1/wallets', WalletApiView, basename='wallets')
 
 urlpatterns = [
     path('v1/wallets/<int:pk>/operation/', UpdateWalletApiView.as_view({'patch': 'update',}), name='update_wallets'),
