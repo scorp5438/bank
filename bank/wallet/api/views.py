@@ -19,7 +19,6 @@ class UpdateWalletApiView(viewsets.ViewSet):
     http_method_names = ['patch']
 
     def update(self, request, pk=None):
-        print(f'{pk = }')
         operationType = request.data.get('operationType')
         amount = request.data.get('amount')
         wallet = self.get_wallet(pk)
@@ -29,7 +28,7 @@ class UpdateWalletApiView(viewsets.ViewSet):
             return Response({"error": "Сумма должна быть числом."}, status=400)
         if wallet is None:
             return Response({"error": "Кошелек не найден."}, status=404)
-        serializer = self.serializer_class(wallet)
+        serializer = self.serializer_class(wallet) # TODO Узнать, надо ли оно и зачем
         if operationType == 'DEPOSIT':
             wallet.balance += amount
         elif operationType == 'WITHDRAW':

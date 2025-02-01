@@ -10,6 +10,6 @@ router = DefaultRouter()
 router.register(r'v1/wallets', WalletApiView, basename='wallets')
 
 urlpatterns = [
-    path('v1/wallets/<int:pk>/operation/', UpdateWalletApiView.as_view({'patch': 'update',}), name='update_wallets'),
+    path('v1/wallets/<int:pk>/operation/', UpdateWalletApiView.as_view({'patch': 'update',}), name='wallet_operation'),
     path('', include(router.urls)),
 ]
