@@ -54,9 +54,10 @@ class UpdateWalletApiView(viewsets.ViewSet):
                                 status=400)
 
             wallet.save()
-            return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
+        return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
                             status=202)
 
+    @transaction.atomic
     def get_wallet_with_retries(self, wallet_id, retries=5, delay=1):
         for attempt in range(retries):
             try:
