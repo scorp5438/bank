@@ -11,7 +11,7 @@ from ..models import Wallet
 
 class WalletApiView(viewsets.ModelViewSet):
     serializer_class = WalletSerializer
-    queryset = Wallet.objects.all()
+    queryset = Wallet.objects.all().order_by('pk')
     http_method_names = ['get', 'post']
 
 

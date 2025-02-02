@@ -10,9 +10,11 @@ class WalletSerializer(serializers.ModelSerializer):
 
 
 
+
 class UpdateWalletSerializer(serializers.ModelSerializer):
     class Meta(WalletSerializer.Meta):
         fields = 'balance',
+
 
     def update(self, instance, validated_data):
         instance.balance = validated_data.get('balance', instance.balance) # TODO добавить в тест валидацию A valid number is required.AND Ensure this value is greater than or equal to 0.

@@ -94,14 +94,14 @@ WSGI_APPLICATION = 'bank.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('DJANGO_DB_NAME', 'django_db'),
+        'NAME': getenv('DJANGO_DB_NAME', 'django'),
         'USER': getenv('DJANGO_DB_USERNAME', 'django_admin'),
         'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'Qwerty741'),
         'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
-        'PORT': getenv('DJANGO_DB_PORT', 5438),
+        'PORT': getenv('DJANGO_DB_PORT', 5432),
     }
 }
-print(getenv('DJANGO_DB_NAME', 'django_db'))
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
