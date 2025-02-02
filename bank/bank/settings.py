@@ -93,11 +93,11 @@ WSGI_APPLICATION = 'bank.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django',
-        'USER': 'django_admin',
-        'PASSWORD': 'Qwerty741',
-        'HOST': 'localhost',
-        'PORT': '5438',
+        'NAME': getenv('DJANGO_DB_NAME', 'django'),
+        'USER': getenv('DJANGO_DB_USERNAME', 'django_admin'),
+        'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'Qwerty741'),
+        'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
+        'PORT': getenv('DJANGO_DB_PORT', 5438),
     }
 }
 
