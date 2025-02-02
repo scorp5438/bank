@@ -19,26 +19,31 @@ class UpdateWalletApiView(viewsets.ViewSet):
     http_method_names = ['patch']
 
     def update(self, request, pk=None):
-        operationType = request.data.get('operationType')
+        operation_type = request.data.get('operationType')
         amount = request.data.get('amount')
+        wallet = self.get_wallet(pk)
+
         try:
             amount = Decimal(amount)
         except (ValueError, TypeError, InvalidOperation):
             return Response({"error": "Сумма должна быть числом."}, status=400)
+
         if amount < 0:
             return Response({"error": "Сумма должна быть положительной."}, status=400)
-        wallet = self.get_wallet(pk)
 
         if wallet is None:
             return Response({"error": "Кошелек не найден."}, status=404)
-        serializer = self.serializer_class(wallet) # TODO Узнать, надо ли оно и зачем
-        if operationType == 'DEPOSIT':
+
+        if operation_type == 'DEPOSIT':
             wallet.balance += amount
-        elif operationType == 'WITHDRAW':
+
+        elif operation_type == 'WITHDRAW':
             if wallet.balance >= amount:
                 wallet.balance -= amount
+
             else:
                 return Response({"error": "На балансе не достаточно средств."}, status=400)
+
         else:
             return Response({"error": "Некорректные данные: operationType должен быть 'DEPOSIT' или 'WITHDRAW'."},
                             status=400)
