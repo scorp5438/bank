@@ -9,13 +9,14 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+from dotenv import load_dotenv
 from os import getenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -93,14 +94,14 @@ WSGI_APPLICATION = 'bank.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('DJANGO_DB_NAME', 'django'),
+        'NAME': getenv('DJANGO_DB_NAME', 'django_db'),
         'USER': getenv('DJANGO_DB_USERNAME', 'django_admin'),
         'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'Qwerty741'),
         'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
         'PORT': getenv('DJANGO_DB_PORT', 5438),
     }
 }
-
+print(getenv('DJANGO_DB_NAME', 'django_db'))
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
