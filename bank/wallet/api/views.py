@@ -21,13 +21,14 @@ class UpdateWalletApiView(viewsets.ViewSet):
     def update(self, request, pk=None):
         operationType = request.data.get('operationType')
         amount = request.data.get('amount')
-        if amount < 0:
-            return Response({"error": "Сумма должна быть положительной."}, status=400) # TODO Написать тест для сценария
-        wallet = self.get_wallet(pk)
         try:
             amount = Decimal(amount)
         except (ValueError, TypeError, InvalidOperation):
             return Response({"error": "Сумма должна быть числом."}, status=400)
+        if amount < 0:
+            return Response({"error": "Сумма должна быть положительной."}, status=400)
+        wallet = self.get_wallet(pk)
+
         if wallet is None:
             return Response({"error": "Кошелек не найден."}, status=404)
         serializer = self.serializer_class(wallet) # TODO Узнать, надо ли оно и зачем
@@ -37,7 +38,7 @@ class UpdateWalletApiView(viewsets.ViewSet):
             if wallet.balance >= amount:
                 wallet.balance -= amount
             else:
-                return Response({"error": "На балансе не достаточно средств."}, status=404)
+                return Response({"error": "На балансе не достаточно средств."}, status=400)
         else:
             return Response({"error": "Некорректные данные: operationType должен быть 'DEPOSIT' или 'WITHDRAW'."},
                             status=400)
