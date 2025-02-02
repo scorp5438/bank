@@ -11,7 +11,7 @@ from ..models import Wallet
 
 class WalletApiView(viewsets.ModelViewSet):
     serializer_class = WalletSerializer
-    queryset = Wallet.objects.all()
+    queryset = Wallet.objects.all().order_by('pk')
     http_method_names = ['get', 'post']
 
 
@@ -57,6 +57,7 @@ class UpdateWalletApiView(viewsets.ViewSet):
             return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
                             status=202)
 
+    @transaction.atomic
     def get_wallet_with_retries(self, wallet_id, retries=5, delay=1):
         for attempt in range(retries):
             try:
