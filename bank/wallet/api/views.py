@@ -58,7 +58,7 @@ class UpdateWalletApiView(viewsets.ViewSet):
                             status=202)
 
     @transaction.atomic
-    def get_wallet_with_retries(self, wallet_id, retries=5, delay=1):
+    def get_wallet_with_retries(self, wallet_id, retries=2, delay=1):
         for attempt in range(retries):
             try:
                 return Wallet.objects.select_for_update().get(id=wallet_id)
