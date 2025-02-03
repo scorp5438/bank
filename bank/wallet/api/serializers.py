@@ -17,6 +17,6 @@ class UpdateWalletSerializer(serializers.ModelSerializer):
 
 
     def update(self, instance, validated_data):
-        instance.balance = validated_data.get('balance', instance.balance) # TODO добавить в тест валидацию A valid number is required.AND Ensure this value is greater than or equal to 0.
+        instance.balance = validated_data.get('balance', instance.balance)
         instance.save()
         return instance
