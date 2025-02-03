@@ -21,10 +21,7 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = getenv(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-tw=r5^8=ob934lb0)a#uw43u7!@mafrzm1ngl82cgp6qjo4_-q'
-)
+SECRET_KEY = getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv(
@@ -96,7 +93,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': getenv('DJANGO_DB_NAME', 'django'),
         'USER': getenv('DJANGO_DB_USERNAME', 'django_admin'),
-        'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'Qwerty741'),
+        'PASSWORD': getenv('DJANGO_DB_PASSWORD'),
         'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
         'PORT': getenv('DJANGO_DB_PORT', 5432),
     }
