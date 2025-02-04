@@ -174,3 +174,15 @@ class UpdateWalletApiView(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.wallet3.balance, 0.0)
         self.assertIn(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+
+    def test_invalid_json(self):
+        data = {
+            'test_invalid_data'
+        }
+        expected_answer = 'JSON parse error'
+        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
+                                     content_type='application/json')
+
+        response_data = response.json().get('detail')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
