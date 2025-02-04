@@ -2,6 +2,7 @@ import time
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction, OperationalError
+from django.db.models import F
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -23,7 +24,10 @@ class UpdateWalletApiView(viewsets.ViewSet):
     def update(self, request, pk=None):
         operation_type = request.data.get('operationType')
         amount = request.data.get('amount')
+        # wallet = cache.get(f'wallet_{pk}')
+        # if not wallet:
         wallet = self.get_wallet_with_retries(pk)
+        #             cache.set(f'wallet_{pk}', wallet)
 
         try:
             amount = Decimal(amount)
@@ -37,15 +41,12 @@ class UpdateWalletApiView(viewsets.ViewSet):
             return Response({"error": "Кошелек не найден."}, status=404)
 
         with transaction.atomic():
-            wallet.refresh_from_db()
 
             if operation_type == 'DEPOSIT':
-                wallet.balance += amount
-
+                wallet.balance = F('balance') + amount
             elif operation_type == 'WITHDRAW':
                 if wallet.balance >= amount:
-                    wallet.balance -= amount
-
+                    wallet.balance = F('balance') - amount
                 else:
                     return Response({"error": "На балансе не достаточно средств."}, status=400)
 
@@ -54,7 +55,8 @@ class UpdateWalletApiView(viewsets.ViewSet):
                                 status=400)
 
             wallet.save()
-
+            wallet.refresh_from_db()
+            # cache.set(f'wallet_{pk}', wallet)
         return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
                             status=202)
 
