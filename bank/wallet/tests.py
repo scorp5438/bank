@@ -49,10 +49,10 @@ class WalletApiViewTestCase(TestCase):
         data = {
             'balance': '-100'
         }
-        valid_response = {'balance': ['Ensure this value is greater than or equal to 0.']}
+        expected_answer = {'balance': ['Ensure this value is greater than or equal to 0.']}
         response = self.client.post(reverse('wallets:wallets-list'), data, format='json')
         json_data = response.json()
-        self.assertEqual(json_data, valid_response)
+        self.assertEqual(json_data, expected_answer)
         self.assertEqual(response.status_code, 400)
 
 class UpdateWalletApiView(TestCase):
@@ -73,7 +73,7 @@ class UpdateWalletApiView(TestCase):
             'amount': 1000
         }
 
-        reference_data_text = f'баланс кошелька {self.wallet3.pk} успешно изменен.'
+        expected_answer = f'баланс кошелька {self.wallet3.pk} успешно изменен.'
 
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
                                      content_type='application/json')
@@ -82,7 +82,7 @@ class UpdateWalletApiView(TestCase):
 
         self.assertEqual(response.status_code, 202)
         self.assertEqual(self.wallet3.balance, 1000.00)
-        self.assertIn(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_withdraw_wallet_valid(self): # Не проходит
         data = {
@@ -105,7 +105,7 @@ class UpdateWalletApiView(TestCase):
             'operationType': 'WITHDRAW',
             'amount': 1000
         }
-        reference_data_text = 'На балансе не достаточно средств.'
+        expected_answer = 'На балансе не достаточно средств.'
 
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet2.pk}), data=data,
                                      content_type='application/json')
@@ -115,7 +115,7 @@ class UpdateWalletApiView(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(str(self.wallet2.balance), '500.49')
-        self.assertEqual(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertEqual(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_non_existent_wallet(self):
         data = {
@@ -124,10 +124,10 @@ class UpdateWalletApiView(TestCase):
         }
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': 4}), data=data,
                                      content_type='application/json')
-        reference_data_text = 'Кошелек не найден.'
+        expected_answer = 'Кошелек не найден.'
         response_data = response.json().get('error')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertEqual(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_invalid_amount(self):
         data = {
@@ -135,14 +135,14 @@ class UpdateWalletApiView(TestCase):
             'amount': 'one thousand'
         }
 
-        reference_data_text = 'Сумма должна быть числом.'
+        expected_answer = 'Сумма должна быть числом.'
 
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
                                      content_type='application/json')
         response_data = response.json().get('error')
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertEqual(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_invalid_operation(self):
         data = {
@@ -150,14 +150,14 @@ class UpdateWalletApiView(TestCase):
             'amount': 1000
         }
 
-        reference_data_text = "operationType должен быть 'DEPOSIT' или 'WITHDRAW'"
+        expected_answer = "operationType должен быть 'DEPOSIT' или 'WITHDRAW'"
 
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
                                      content_type='application/json')
         response_data = response.json().get('error')
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_update_wallet_with_positive_balance(self):
         data = {
@@ -165,7 +165,7 @@ class UpdateWalletApiView(TestCase):
             'amount': -1000
         }
 
-        reference_data_text = 'Сумма должна быть положительной.'
+        expected_answer = 'Сумма должна быть положительной.'
 
         response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
                                      content_type='application/json')
@@ -173,7 +173,7 @@ class UpdateWalletApiView(TestCase):
         response_data = response.json().get('error')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.wallet3.balance, 0.0)
-        self.assertIn(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
+        self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
     def test_invalid_json(self):
         data = {
