@@ -44,4 +44,4 @@ jobs:
       - name: Run tests
         run: |
           cd bank
-          python manage.py test orders.tests
+          python manage.py test wallet.tests
