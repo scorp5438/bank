@@ -18,7 +18,6 @@ class WalletApiViewTestCase(TestCase):
         json_data = response.json()
         self.assertEqual(len(json_data), 2)
 
-
     def test_wallet_balance(self):
         response = self.client.get(reverse('wallets:wallets-detail', kwargs={'pk': self.wallet.pk}))
         balance_test = response.json().get('balance')
@@ -55,14 +54,13 @@ class WalletApiViewTestCase(TestCase):
         self.assertEqual(json_data, expected_answer)
         self.assertEqual(response.status_code, 400)
 
+
 class UpdateWalletApiView(TestCase):
 
     def setUp(self):
         self.wallet = Wallet.objects.create(balance='1000.10')
         self.wallet2 = Wallet.objects.create(balance='500.49')
         self.wallet3 = Wallet.objects.create(balance='0.00')
-
-
 
     def tearDown(self):
         Wallet.objects.all().delete()
@@ -84,7 +82,7 @@ class UpdateWalletApiView(TestCase):
         self.assertEqual(self.wallet3.balance, 1000.00)
         self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
-    def test_withdraw_wallet_valid(self): # Не проходит
+    def test_withdraw_wallet_valid(self):  # Не проходит
         data = {
             'operationType': 'WITHDRAW',
             'amount': 1000

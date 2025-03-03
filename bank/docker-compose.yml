@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DJANGO_DB_NAME}
+      POSTGRES_USER: ${DJANGO_DB_USERNAME}
+      POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
+      PORT: ${DJANGO_DB_PORT}
+    volumes:
+      - postgres_data_bank:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DJANGO_DB_USERNAME} -d ${DJANGO_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: sh -c "gunicorn bank.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - static_volume_bank:/app/static
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+    environment:
+      - PYTHONPATH=/app
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "81:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - static_volume_bank:/app/static
+    depends_on:
+      - web
+
+volumes:
+  postgres_data_bank:
+  static_volume_bank:

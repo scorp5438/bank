@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os.path
+
 from dotenv import load_dotenv
 from os import getenv
 from pathlib import Path
@@ -30,7 +32,6 @@ DEBUG = getenv(
 )
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -77,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bank.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -91,11 +91,11 @@ WSGI_APPLICATION = 'bank.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('DJANGO_DB_NAME', 'django'),
-        'USER': getenv('DJANGO_DB_USERNAME', 'django_admin'),
-        'PASSWORD': getenv('DJANGO_DB_PASSWORD'),
+        'NAME': getenv('DJANGO_DB_NAME', 'test_order_db'),
+        'USER': getenv('DJANGO_DB_USERNAME', 'test_order_user'),
+        'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'test_password'),
         'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
-        'PORT': getenv('DJANGO_DB_PORT', 5432),
+        'PORT': getenv('DJANGO_DB_PORT', 5001),
     }
 }
 
@@ -117,7 +117,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -129,11 +128,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

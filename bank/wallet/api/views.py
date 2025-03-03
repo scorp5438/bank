@@ -35,7 +35,11 @@ class UpdateWalletApiView(viewsets.ViewSet):
             return Response({"error": "Сумма должна быть положительной."}, status=400)
 
         with transaction.atomic():
-            wallet = self.get_wallet_with_retries(pk)
+            try:
+                wallet = Wallet.objects.select_for_update().get(id=pk)
+            except Wallet.DoesNotExist:
+                wallet = None
+            # wallet = self.get_wallet_with_retries(pk)
             if wallet is None:
                 return Response({"error": "Кошелек не найден."}, status=404)
             if operation_type == 'DEPOSIT':
@@ -52,17 +56,17 @@ class UpdateWalletApiView(viewsets.ViewSet):
             wallet = Wallet.objects.get(pk=wallet.pk)
             cache.set(f'wallet_{pk}', wallet)
         return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
-                            status=202)
+                        status=202)
 
-    @transaction.atomic
-    def get_wallet_with_retries(self, wallet_id, retries=3, delay=1):
-        for attempt in range(retries):
-            try:
-                return Wallet.objects.select_for_update().get(id=wallet_id)
-            except Wallet.DoesNotExist:
-                return None
-            except OperationalError:
-                if attempt < retries - 1:
-                    time.sleep(delay)
-                else:
-                    raise
+    # @transaction.atomic
+    # def get_wallet_with_retries(self, wallet_id, retries=3, delay=1):
+    #     for attempt in range(retries):
+    #         try:
+    #             return Wallet.objects.select_for_update().get(id=wallet_id)
+    #         except Wallet.DoesNotExist:
+    #             return None
+    #         except OperationalError:
+    #             if attempt < retries - 1:
+    #                 time.sleep(delay)
+    #             else:
+    #                 raise
