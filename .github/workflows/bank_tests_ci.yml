@@ -1,4 +1,4 @@
-name: Order check
+name: Bank check
 
 on:
   push:
