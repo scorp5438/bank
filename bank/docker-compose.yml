@@ -21,8 +21,6 @@ services:
     command: sh -c "gunicorn bank.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
       - static_volume_bank:/app/static
-    ports:
-      - "8001:8000"
     depends_on:
       - db
     environment:
@@ -43,7 +41,7 @@ services:
     depends_on:
       - web
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/health/" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:81/health/" ]
       interval: 30s
       timeout: 10s
       retries: 3
