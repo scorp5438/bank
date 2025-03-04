@@ -9,12 +9,9 @@ class WalletSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
 class UpdateWalletSerializer(serializers.ModelSerializer):
     class Meta(WalletSerializer.Meta):
         fields = 'balance',
-
 
     def update(self, instance, validated_data):
         instance.balance = validated_data.get('balance', instance.balance)

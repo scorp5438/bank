@@ -1,6 +1,7 @@
 import time
 from decimal import Decimal, InvalidOperation
 
+from django.core.cache import cache
 from django.db import transaction, OperationalError
 from django.db.models import F
 from rest_framework import viewsets
@@ -24,10 +25,6 @@ class UpdateWalletApiView(viewsets.ViewSet):
     def update(self, request, pk=None):
         operation_type = request.data.get('operationType')
         amount = request.data.get('amount')
-        # wallet = cache.get(f'wallet_{pk}')
-        # if not wallet:
-        wallet = self.get_wallet_with_retries(pk)
-        #             cache.set(f'wallet_{pk}', wallet)
 
         try:
             amount = Decimal(amount)
@@ -37,38 +34,39 @@ class UpdateWalletApiView(viewsets.ViewSet):
         if amount < 0:
             return Response({"error": "Сумма должна быть положительной."}, status=400)
 
-        if wallet is None:
-            return Response({"error": "Кошелек не найден."}, status=404)
-
         with transaction.atomic():
-
+            try:
+                wallet = Wallet.objects.select_for_update().get(id=pk)
+            except Wallet.DoesNotExist:
+                wallet = None
+            # wallet = self.get_wallet_with_retries(pk)
+            if wallet is None:
+                return Response({"error": "Кошелек не найден."}, status=404)
             if operation_type == 'DEPOSIT':
-                wallet.balance = F('balance') + amount
+                Wallet.objects.filter(pk=wallet.pk).update(balance=F('balance') + amount)
             elif operation_type == 'WITHDRAW':
-                if wallet.balance >= amount:
-                    wallet.balance = F('balance') - amount
-                else:
+                temp = Wallet.objects.filter(pk=wallet.pk, balance__gte=amount).update(balance=F('balance') - amount)
+                if not temp:
                     return Response({"error": "На балансе не достаточно средств."}, status=400)
 
             else:
                 return Response({"error": "Некорректные данные: operationType должен быть 'DEPOSIT' или 'WITHDRAW'."},
                                 status=400)
 
-            wallet.save()
-            wallet.refresh_from_db()
-            # cache.set(f'wallet_{pk}', wallet)
+            wallet = Wallet.objects.get(pk=wallet.pk)
+            cache.set(f'wallet_{pk}', wallet)
         return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
-                            status=202)
+                        status=202)
 
-    @transaction.atomic
-    def get_wallet_with_retries(self, wallet_id, retries=3, delay=1):
-        for attempt in range(retries):
-            try:
-                return Wallet.objects.select_for_update().get(id=wallet_id)
-            except Wallet.DoesNotExist:
-                return None
-            except OperationalError:
-                if attempt < retries - 1:
-                    time.sleep(delay)
-                else:
-                    raise
+    # @transaction.atomic
+    # def get_wallet_with_retries(self, wallet_id, retries=3, delay=1):
+    #     for attempt in range(retries):
+    #         try:
+    #             return Wallet.objects.select_for_update().get(id=wallet_id)
+    #         except Wallet.DoesNotExist:
+    #             return None
+    #         except OperationalError:
+    #             if attempt < retries - 1:
+    #                 time.sleep(delay)
+    #             else:
+    #                 raise
