@@ -42,6 +42,11 @@ services:
       - static_volume_bank:/app/static
     depends_on:
       - web
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data_bank:

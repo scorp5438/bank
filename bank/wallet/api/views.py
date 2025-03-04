@@ -1,9 +1,6 @@
-import time
 from decimal import Decimal, InvalidOperation
 
-from django.core.cache import cache
-from django.db import transaction, OperationalError
-from django.db.models import F
+from django.db import transaction
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -12,61 +9,102 @@ from ..models import Wallet
 
 
 class WalletApiView(viewsets.ModelViewSet):
+    """
+    Представление для работы с кошельками (Wallet).
+
+    Поддерживает следующие HTTP-методы:
+    - GET: Получить список всех кошельков или детали конкретного кошелька.
+    - POST: Создать новый кошелек.
+
+    Атрибуты:
+    - serializer_class: Сериализатор, используемый для преобразования данных.
+    - queryset: Запрос для получения всех кошельков, отсортированных по первичному ключу.
+    - http_method_names: Список разрешенных HTTP-методов (GET, POST).
+    """
     serializer_class = WalletSerializer
     queryset = Wallet.objects.all().order_by('pk')
     http_method_names = ['get', 'post']
 
 
 class UpdateWalletApiView(viewsets.ViewSet):
+    """
+    Представление для выполнения операций с балансом кошелька.
+
+    Поддерживает следующие HTTP-методы:
+    - PATCH: Обновить баланс кошелька (пополнение или списание).
+
+    Атрибуты:
+    - serializer_class: Сериализатор, используемый для обновления баланса.
+    - queryset: Запрос для получения всех кошельков.
+    - http_method_names: Список разрешенных HTTP-методов (PATCH).
+
+    Пример запроса:
+    {
+        "operationType": "WITHDRAW",
+        "amount": 500
+    }
+    """
     serializer_class = UpdateWalletSerializer
     queryset = Wallet.objects.all()
     http_method_names = ['patch']
 
     def update(self, request, pk=None):
+        """
+        Обновляет баланс кошелька.
+
+        Аргументы:
+        - request: Запрос, содержащий данные для обновления.
+        - pk: Первичный ключ кошелька, который нужно обновить.
+
+        Логика:
+        1. Проверяет, что сумма (amount) является числом и положительной.
+        2. Проверяет, что тип операции (operationType) корректен (DEPOSIT или WITHDRAW).
+        3. Если операция WITHDRAW, проверяет, что на балансе достаточно средств.
+        4. Обновляет баланс кошелька в транзакции с использованием select_for_update
+           для предотвращения race conditions.
+
+        Возвращает:
+        - В случае успеха: Сообщение об успешном изменении баланса и новый баланс.
+        - В случае ошибки: Сообщение об ошибке и соответствующий HTTP-статус.
+        """
         operation_type = request.data.get('operationType')
         amount = request.data.get('amount')
 
         try:
             amount = Decimal(amount)
         except (ValueError, TypeError, InvalidOperation):
-            return Response({"error": "Сумма должна быть числом."}, status=400)
+            return Response({'error': 'The amount must be a number.'}, status=400)
 
         if amount < 0:
-            return Response({"error": "Сумма должна быть положительной."}, status=400)
+            return Response({"error": 'The amount must be positive.'}, status=400)
+
+        if operation_type not in ['DEPOSIT', 'WITHDRAW']:
+            return Response(
+                {'error': 'Incorrect data: operationType must be \'DEPOSIT\' or \'WITHDRAW\'.'},
+                status=400
+            )
 
         with transaction.atomic():
             try:
                 wallet = Wallet.objects.select_for_update().get(id=pk)
             except Wallet.DoesNotExist:
                 wallet = None
-            # wallet = self.get_wallet_with_retries(pk)
             if wallet is None:
-                return Response({"error": "Кошелек не найден."}, status=404)
+                return Response({'error': 'Wallet not found.'}, status=404)
+
             if operation_type == 'DEPOSIT':
-                Wallet.objects.filter(pk=wallet.pk).update(balance=F('balance') + amount)
+                wallet.balance += amount
             elif operation_type == 'WITHDRAW':
-                temp = Wallet.objects.filter(pk=wallet.pk, balance__gte=amount).update(balance=F('balance') - amount)
-                if not temp:
-                    return Response({"error": "На балансе не достаточно средств."}, status=400)
+                if wallet.balance < amount:
+                    return Response(
+                        {'error': 'There are not enough funds on the balance.'},
+                        status=400
+                    )
+                wallet.balance -= amount
 
-            else:
-                return Response({"error": "Некорректные данные: operationType должен быть 'DEPOSIT' или 'WITHDRAW'."},
-                                status=400)
+            wallet.save()
 
-            wallet = Wallet.objects.get(pk=wallet.pk)
-            cache.set(f'wallet_{pk}', wallet)
-        return Response({"message": f"баланс кошелька {pk} успешно изменен. Текущий баланс {wallet.balance}"},
-                        status=202)
-
-    # @transaction.atomic
-    # def get_wallet_with_retries(self, wallet_id, retries=3, delay=1):
-    #     for attempt in range(retries):
-    #         try:
-    #             return Wallet.objects.select_for_update().get(id=wallet_id)
-    #         except Wallet.DoesNotExist:
-    #             return None
-    #         except OperationalError:
-    #             if attempt < retries - 1:
-    #                 time.sleep(delay)
-    #             else:
-    #                 raise
+        return Response(
+            {'message': f'wallet balance {pk} successfully changed. Current balance {wallet.balance}'},
+            status=200
+        )

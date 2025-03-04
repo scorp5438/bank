@@ -5,8 +5,30 @@ from django.db import models
 
 
 class Wallet(models.Model):
-    balance = models.DecimalField(default=0.00, max_digits=30, decimal_places=2, null=False, blank=False,
-                                  verbose_name='баланс', validators=[MinValueValidator(Decimal('0'))])
+    """
+    Модель для представления кошелька.
+
+    Атрибуты:
+    - balance: Текущий баланс кошелька.
+      Тип: DecimalField (максимум 30 цифр, 2 знака после запятой).
+      Ограничения:
+        - Не может быть пустым (null=False, blank=False).
+        - Не может быть отрицательным (MinValueValidator(Decimal('0'))).
+      По умолчанию: 0.00.
+
+    Методы:
+    - __str__: Возвращает строковое представление кошелька в формате:
+      "Баланс кошелька с id <id>: <balance>".
+    """
+    balance = models.DecimalField(
+        default=0.00,
+        max_digits=30,
+        decimal_places=2,
+        null=False,
+        blank=False,
+        verbose_name='баланс',
+        validators=[MinValueValidator(Decimal('0'))]
+    )
 
     class Meta:
         verbose_name = 'Кошелек'
