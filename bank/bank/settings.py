@@ -73,7 +73,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': getenv('DJANGO_DB_NAME', 'test_order_db'),
-        'USER': getenv('DJANGO_DB_USERNAME', 'test_user_user'),
+        'USER': getenv('DJANGO_DB_USERNAME', 'test_order_user'),
         'PASSWORD': getenv('DJANGO_DB_PASSWORD', 'test_password'),
         'HOST': getenv('DJANGO_DB_HOST', 'localhost'),
         'PORT': getenv('DJANGO_DB_PORT', 5001),
