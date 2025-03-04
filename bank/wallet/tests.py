@@ -1,6 +1,10 @@
-from django.test import TestCase
-from django.urls import reverse
+from decimal import Decimal
+from threading import Thread
+import time
 
+from django.test import TestCase, TransactionTestCase
+from django.urls import reverse
+from django.db import connection
 from .models import Wallet
 
 
@@ -71,30 +75,36 @@ class UpdateWalletApiView(TestCase):
             'amount': 1000
         }
 
-        expected_answer = f'баланс кошелька {self.wallet3.pk} успешно изменен.'
+        expected_answer = f'wallet balance {self.wallet3.pk} successfully changed. Current balance'
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}),
+            data=data,
+            content_type='application/json'
+        )
         self.wallet3.refresh_from_db()
         response_data = response.json().get('message')
 
-        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(self.wallet3.balance, 1000.00)
         self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
 
-    def test_withdraw_wallet_valid(self):  # Не проходит
+    def test_withdraw_wallet_valid(self):
         data = {
             'operationType': 'WITHDRAW',
             'amount': 1000
         }
-        reference_data_text = f'баланс кошелька {self.wallet.pk} успешно изменен.'
+        reference_data_text = f'wallet balance {self.wallet.pk} successfully changed. Current balance'
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet.pk}),
+            data=data,
+            content_type='application/json'
+        )
 
         self.wallet.refresh_from_db()
         response_data = response.json().get('message')
-        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(str(self.wallet.balance), '0.10')
         self.assertIn(reference_data_text, response_data, msg='Ошибка, данный тест не пройден')
 
@@ -103,10 +113,13 @@ class UpdateWalletApiView(TestCase):
             'operationType': 'WITHDRAW',
             'amount': 1000
         }
-        expected_answer = 'На балансе не достаточно средств.'
+        expected_answer = 'There are not enough funds on the balance.'
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet2.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet2.pk}),
+            data=data,
+            content_type='application/json'
+        )
 
         self.wallet2.refresh_from_db()
         response_data = response.json().get('error')
@@ -120,9 +133,12 @@ class UpdateWalletApiView(TestCase):
             'operationType': 'DEPOSIT',
             'amount': 1000
         }
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': 4}), data=data,
-                                     content_type='application/json')
-        expected_answer = 'Кошелек не найден.'
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': 4}),
+            data=data,
+            content_type='application/json'
+        )
+        expected_answer = 'Wallet not found.'
         response_data = response.json().get('error')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
@@ -133,10 +149,13 @@ class UpdateWalletApiView(TestCase):
             'amount': 'one thousand'
         }
 
-        expected_answer = 'Сумма должна быть числом.'
+        expected_answer = 'The amount must be a number.'
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}),
+            data=data,
+            content_type='application/json'
+        )
         response_data = response.json().get('error')
 
         self.assertEqual(response.status_code, 400)
@@ -148,10 +167,13 @@ class UpdateWalletApiView(TestCase):
             'amount': 1000
         }
 
-        expected_answer = "operationType должен быть 'DEPOSIT' или 'WITHDRAW'"
+        expected_answer = "Incorrect data: operationType must be \'DEPOSIT\' or \'WITHDRAW\'."
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}),
+            data=data,
+            content_type='application/json'
+        )
         response_data = response.json().get('error')
 
         self.assertEqual(response.status_code, 400)
@@ -163,10 +185,13 @@ class UpdateWalletApiView(TestCase):
             'amount': -1000
         }
 
-        expected_answer = 'Сумма должна быть положительной.'
+        expected_answer = 'The amount must be positive.'
 
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}),
+            data=data,
+            content_type='application/json'
+        )
         self.wallet3.refresh_from_db()
         response_data = response.json().get('error')
         self.assertEqual(response.status_code, 400)
@@ -178,9 +203,64 @@ class UpdateWalletApiView(TestCase):
             'test_invalid_data'
         }
         expected_answer = 'JSON parse error'
-        response = self.client.patch(reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}), data=data,
-                                     content_type='application/json')
+        response = self.client.patch(
+            reverse('wallets:wallet_operation', kwargs={'pk': self.wallet3.pk}),
+            data=data,
+            content_type='application/json'
+        )
 
         response_data = response.json().get('detail')
         self.assertEqual(response.status_code, 400)
         self.assertIn(expected_answer, response_data, msg='Ошибка, данный тест не пройден')
+
+
+class UpdateWalletApiViewConcurrentDeposit(TransactionTestCase):
+
+    def setUp(self):
+        self.wallet = Wallet.objects.create(balance='1000.10')
+        self.wallet2 = Wallet.objects.create(balance='1500.49')
+        self.wallet3 = Wallet.objects.create(balance='0.00')
+
+    def tearDown(self):
+        Wallet.objects.all().delete()
+
+    def test_concurrent_deposit(self):
+        def deposit(wallet_id):
+            data = {'operationType': 'DEPOSIT', 'amount': 100}
+            self.client.patch(
+                reverse('wallets:wallet_operation', kwargs={'pk': wallet_id}),
+                data=data,
+                content_type='application/json'
+            )
+            connection.close()
+
+        threads = [Thread(target=deposit, args=(self.wallet.pk,)) for _ in range(10)]
+        for thread in threads:
+            thread.start()
+            time.sleep(0.01)
+
+        for thread in threads:
+            thread.join()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, Decimal('1000.10') + Decimal('100') * 10)
+
+
+    def test_concurrent_withdraw(self):
+        def deposit(wallet_id):
+            data = {'operationType': 'WITHDRAW', 'amount': 100}
+            self.client.patch(
+                reverse('wallets:wallet_operation', kwargs={'pk': wallet_id}),
+                data=data,
+                content_type='application/json'
+            )
+            connection.close()
+
+        threads = [Thread(target=deposit, args=(self.wallet2.pk,)) for _ in range(10)]
+        for thread in threads:
+            thread.start()
+            time.sleep(0.01)
+
+        for thread in threads:
+            thread.join()
+        self.wallet2.refresh_from_db()
+        self.assertEqual(self.wallet2.balance, Decimal('1500.49') - Decimal('100') * 10)
